@@ -3,47 +3,25 @@ module.exports = function solveSudoku(matrix) {
     return matrix;
   }
 
-  let rowIndex = -1;
-  let colIndex = -1;
-  for (let i = 0; i < 9; i++) {
-    for (let j = 0; j < 9; j++) {
-      if (matrix[i][j] === 0) {
-        rowIndex = i;
-        colIndex = j;
-        break;
-      }
-    }
-    if (rowIndex !== -1) {
-      break;
-    }
-  }
+  const zeroIndex = matrix
+    .reduce((acc, row) => [...acc, ...row], [])
+    .findIndex((value) => value === 0);
 
-  if (rowIndex === -1) {
+  if (zeroIndex === -1) {
     return null;
   }
 
-  const rowValues = matrix[rowIndex];
-  const colValues = matrix
-    .map((row) => row[colIndex])
-    .reduce((acc, value) => [...acc, value], []);
-  const squareRowIndex = Math.floor(rowIndex / 3) * 3;
-  const squareColIndex = Math.floor(colIndex / 3) * 3;
-  const squareValues = matrix
-    .slice(squareRowIndex, squareRowIndex + 3)
-    .map((row) => row.slice(squareColIndex, squareColIndex + 3))
-    .reduce((acc, part) => [...acc, ...part], []);
+  const rowIndex = Math.floor(zeroIndex / 9);
+  const colIndex = zeroIndex % 9;
 
-  const exceptions = [
-    ...new Set(
-      [...rowValues, ...colValues, ...squareValues].filter(
-        (value) => value !== 0
-      )
-    ),
-  ];
+  const rowValues = getRowValues(matrix, rowIndex);
+  const colValues = getColValues(matrix, colIndex);
+  const squareValues = getSquareValues(matrix, rowIndex, colIndex);
+  const exceptions = [...rowValues, ...colValues, ...squareValues];
   const possibleValues = DIGITS.filter((value) => !exceptions.includes(value));
 
-  for (let i = 0; i < possibleValues.length; i++) {
-    matrix[rowIndex][colIndex] = possibleValues[i];
+  for (const possibleValue of possibleValues) {
+    matrix[rowIndex][colIndex] = possibleValue;
     const result = solveSudoku(matrix);
     if (result) {
       return result;
@@ -51,6 +29,22 @@ module.exports = function solveSudoku(matrix) {
   }
   matrix[rowIndex][colIndex] = 0;
   return null;
+};
+
+const getRowValues = (matrix, rowIndex) => matrix[rowIndex];
+
+const getColValues = (matrix, colIndex) =>
+  matrix
+    .map((row) => row[colIndex])
+    .reduce((acc, value) => [...acc, value], []);
+
+const getSquareValues = (matrix, rowIndex, colIndex) => {
+  const squareRowIndex = Math.floor(rowIndex / 3) * 3;
+  const squareColIndex = Math.floor(colIndex / 3) * 3;
+  return matrix
+    .slice(squareRowIndex, squareRowIndex + 3)
+    .map((row) => row.slice(squareColIndex, squareColIndex + 3))
+    .reduce((acc, part) => [...acc, ...part], []);
 };
 
 const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
